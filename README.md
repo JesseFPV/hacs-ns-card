@@ -34,7 +34,9 @@ cards:
 
 ### Images:
 
+Single card example:
 <img width="495" alt="ns_card_image_1" src="https://user-images.githubusercontent.com/42770753/211256045-165b1747-db12-4968-b831-eb5d35b4caf7.png">
 
+Slider example:
 <img width="501" alt="ns_card_image_2" src="https://user-images.githubusercontent.com/42770753/211256097-f04475c7-77bb-47f3-b62a-cdac1e2826de.png">
 
