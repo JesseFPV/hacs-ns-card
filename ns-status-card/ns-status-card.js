@@ -2,15 +2,16 @@ class NsStatusCard extends HTMLElement {
     // Whenever the state changes, a new `hass` object is set. Use this to
     // update your content.
     set hass(hass) {
-      // Initialize the content if it's not there yet.
-      if (!this.content) {
-        this.innerHTML = `
+        // Initialize the content if it's not there yet.
+        if (!this.content) {
+            this.innerHTML = `
           <ha-card class="ns_card">
 
             <div class="card-content"></div>
           </ha-card>
           <style>
           .ns_card {
+            background-color: #FEC919;
             background-image: url('/local/community/ns-status-card/ns_card_bg.jpg');
             background-size: cover;
             color: #000;
@@ -68,101 +69,149 @@ class NsStatusCard extends HTMLElement {
           }
           </style>
         `;
-        this.content = this.querySelector('div');
-      }
-  
-      const entityId = this.config.entity;
-      const state = hass.states[entityId];
-      const stateStr = state ? state.state : 'unavailable';
-      const attributes = state.attributes; 
+            this.content = this.querySelector('div');
+        }
 
-      console.log(state);
-      //console.log(state);
-      let delay = '';
+        // debug
+        // console.log(hass);
 
-      if(attributes.departure_delay == true){
-        var startTime = new Date('2013/10/09 ' + attributes.departure_time_planned); 
-        var endTime = new Date('2013/10/09 ' + attributes.departure_time_actual);
-        var difference = endTime.getTime() - startTime.getTime(); // This will give difference in milliseconds
-        var delayTime = Math.round(difference / 60000);
-        delay = '+'+delayTime;
-      }
+        const translations = {
+            "en": {
+                "depart": "Departs",
+                "platform": "Platform",
+                "route": "Route",
+                "next": "Next",
+                "updated": "ago",
+                "minutes": "min",
+                "seconds": "sec"
+            },
+            "nl": {
+                "depart": "Geldig op",
+                "platform": "Perron",
+                "route": "Enkele Reis",
+                "next": "Volgende",
+                "updated": "geleden",
+                "minutes": "minuten",
+                "seconds": "seconden"
+            },
+            "ru": {
+                "depart": "Отправляется",
+                "platform": "Платформа",
+                "route": "Маршрут",
+                "next": "Следующий",
+                "updated": "назад",
+                "minutes": "минут",
+                "seconds": "секунд"
+            }
+        }
 
-      let arrivalLoc = attributes.route[1];
-      if(attributes.route[2]){
-        arrivalLoc = attributes.route[2];
-      }
+        let translation = translations["en"]
+        const lang = hass.language
+        if (translations.hasOwnProperty(lang)) {
+            translation = translations[lang]
+        }
 
-      let timeAgo = timeSince(state.last_updated); 
+        const entityId = this.config.entity;
+        const state = hass.states[entityId];
+        const stateStr = state ? state.state : 'unavailable';
+        const attributes = state.attributes;
 
-      let platform = '';
-      if(attributes.departure_platform_actual){
-        platform = attributes.departure_platform_actual;
-      }
+        let delay = '';
 
-      this.content.innerHTML = `
+        if (attributes.departure_delay == true) {
+            var startTime = new Date('2013/10/09 ' + attributes.departure_time_planned);
+            var startTime = new Date('2013/10/09 ' + attributes.departure_time_planned);
+            var startTime = new Date('2013/10/09 ' + attributes.departure_time_planned);
+            var endTime = new Date('2013/10/09 ' + attributes.departure_time_actual);
+            var difference = endTime.getTime() - startTime.getTime(); // This will give difference in milliseconds
+            var delayTime = Math.round(difference / 60000);
+            delay = '+' + delayTime;
+        }
+
+        let arrivalLoc = attributes.route[1];
+        if (attributes.route[2]) {
+            arrivalLoc = attributes.route[2];
+        }
+
+        let timeAgo = timeSince(state.last_updated, translation);
+
+        let platform = '';
+        if (attributes.departure_platform_actual) {
+            platform = attributes.departure_platform_actual;
+        }
+
+        let next = '';
+        if (attributes.next) {
+            next = attributes.next
+        }
+
+        this.content.innerHTML = `
         <div class="ns_card_departure_time">
-          <span>Geldig op</span>
+          <span>${translation.depart}</span>
           <b>${attributes.departure_time_planned} <i>${delay}</i></b>
         </div>
 
         <div class="ns_card_departure_platform">
-          <span>Perron</span>
+          <span>${translation.platform}</span>
           <b>${platform}</b>
         </div>
-        
+
         <div class="ns_card_route">
-          <span>Enkele Reis</span>
+          <span>${translation.route}</span>
           <b>${attributes.route[0]}</b>
           <b>${arrivalLoc}</b>
         </div>
 
+        <div class="ns_card_route">
+          <span>${translation.next} - ${next}</span>
+        </div>
+
         <div class="ns_card_updated">
-          <span>${timeAgo} geleden</span>
+          <span>${timeAgo} ${translation.updated}</span>
         </div>
         <br><br>
-        
+
       `;
     }
-  
+
     // The user supplied configuration. Throw an exception and Home Assistant
     // will render an error card.
     setConfig(config) {
-      if (!config.entity) {
-        throw new Error('You need to define an entity');
-      }
-      this.config = config;
+        if (!config.entity) {
+            throw new Error('You need to define an entity');
+        }
+        this.config = config;
     }
-    
-  
+
+
     // The height of your card. Home Assistant uses this to automatically
     // distribute all cards over the available columns.
     getCardSize() {
-      return 3;
+        return 3;
     }
-  }
-  
-  customElements.define('ns-status-card', NsStatusCard);
+}
+
+customElements.define('ns-status-card', NsStatusCard);
 
 
 function diff_minutes(dt2, dt1) {
 
-  var diff =(dt2.getTime() - dt1.getTime()) / 1000;
-  diff /= 60;
-  return Math.abs(Math.round(diff));
-  
+    var diff = (dt2.getTime() - dt1.getTime()) / 1000;
+    diff /= 60;
+    return Math.abs(Math.round(diff));
+
 }
 
-function timeSince(timeString) {
-  // Parse the timeString into a Date object
-  const time = new Date(timeString);
+function timeSince(timeString, translation) {
+    // Parse the timeString into a Date object
+    const time = new Date(timeString);
 
-  // Calculate the difference between the time and the current time
-  const diff = new Date() - time;
+    // Calculate the difference between the time and the current time
+    const diff = new Date() - time;
 
-  // Convert the difference to minutes
-  const minutes = Math.floor(diff / 1000 / 60);
+    // Convert the difference to minutes
+    const minutes = Math.floor(diff / 1000 / 60);
 
-  // Return the number of minutes if it's at least 1 minute, otherwise return the number of seconds
-  return minutes >= 1 ? `${minutes} minuten` : `${Math.floor(diff / 1000)} seconden`;
+    // Return the number of minutes if it's at least 1 minute, otherwise return the number of seconds
+    return minutes >= 1 ? `${minutes} ${translation.minutes}` : `${Math.floor(diff / 1000)} ${translation.seconds}`;
 }
