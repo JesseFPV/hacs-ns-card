@@ -30,6 +30,9 @@ class NsStatusCard extends HTMLElement {
             font-size: 32px;
             font-weight: 800;
           }
+		  .ns_card_departure_platform b.red {
+			color: red;
+		  }
           .ns_card_departure_time span {
             width: 100%;
             font-size: 10px;
@@ -83,7 +86,8 @@ class NsStatusCard extends HTMLElement {
                 "next": "Next",
                 "updated": "ago",
                 "minutes": "min",
-                "seconds": "sec"
+                "seconds": "sec",
+				"cancelled": "cancelled"
             },
             "nl": {
                 "depart": "Geldig op",
@@ -92,7 +96,8 @@ class NsStatusCard extends HTMLElement {
                 "next": "Volgende",
                 "updated": "geleden",
                 "minutes": "minuten",
-                "seconds": "seconden"
+                "seconds": "seconden",
+				"cancelled": "Rijdt niet"
             },
             "ru": {
                 "depart": "Отправляется",
@@ -101,7 +106,8 @@ class NsStatusCard extends HTMLElement {
                 "next": "Следующий",
                 "updated": "назад",
                 "minutes": "минут",
-                "seconds": "секунд"
+                "seconds": "секунд",
+				"cancelled": "Отменён"
             }
         }
 
@@ -118,7 +124,12 @@ class NsStatusCard extends HTMLElement {
 
         let delay = '';
 
-        if (attributes.departure_delay == true) {
+        // Check if train is cancelled
+		if (attributes.status.toLowerCase() === 'cancelled' || attributes.going === false) {
+			delay = translation.cancelled;
+		}
+		// Else check for delay
+		else if (attributes.departure_delay == true) {
             var startTime = new Date('2013/10/09 ' + attributes.departure_time_planned);
             var startTime = new Date('2013/10/09 ' + attributes.departure_time_planned);
             var startTime = new Date('2013/10/09 ' + attributes.departure_time_planned);
@@ -136,8 +147,17 @@ class NsStatusCard extends HTMLElement {
         let timeAgo = timeSince(state.last_updated, translation);
 
         let platform = '';
-        if (attributes.departure_platform_actual) {
+		let platformBClass = '';
+        if (attributes.status.toLowerCase() === 'cancelled' || attributes.going === false) {
+			platform = `-`;
+		}
+        else if (attributes.departure_platform_actual) {
             platform = attributes.departure_platform_actual;
+            
+			if (attributes.departure_platform_actual !== attributes.departure_platform_planned)
+            {
+				platformBClass = 'red';
+			}
         }
 
         let next = '';
@@ -153,7 +173,7 @@ class NsStatusCard extends HTMLElement {
 
         <div class="ns_card_departure_platform">
           <span>${translation.platform}</span>
-          <b>${platform}</b>
+          <b class="${platformBClass}">${platform}</b>
         </div>
 
         <div class="ns_card_route">
